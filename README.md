@@ -4,9 +4,21 @@ Lua bindings for the [mpgo](https://github.com/boxesandglue/mpgo) MetaPost curve
 
 ## Installation
 
+### Homebrew (macOS/Linux)
+
+```bash
+brew install boxesandglue/tap/hobby
+```
+
+### Go
+
 ```bash
 go install github.com/boxesandglue/hobby/cmd/hobby@latest
 ```
+
+### Binary Downloads
+
+Download binaries from the [releases page](https://github.com/boxesandglue/hobby/releases).
 
 ## Usage
 
