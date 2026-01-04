@@ -21,6 +21,7 @@ func Open(l *lua.State) {
 	registerPenMeta(l)
 	registerDashMeta(l)
 	registerPictureMeta(l)
+	registerLabelMeta(l)
 	registerContextMeta(l)
 	registerVarMeta(l)
 	registerCtxPathBuilderMeta(l)

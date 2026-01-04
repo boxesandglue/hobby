@@ -456,6 +456,32 @@ func pathIndex(l *lua.State) int {
 		})
 		return 1
 
+	case "directiontime":
+		// path:directiontime(dx, dy) - find t where tangent equals (dx, dy)
+		l.PushGoFunction(func(l *lua.State) int {
+			dx := lua.CheckNumber(l, 2)
+			dy := lua.CheckNumber(l, 3)
+			t := path.DirectionTimeOf(mp.Number(dx), mp.Number(dy))
+			l.PushNumber(float64(t))
+			return 1
+		})
+		return 1
+
+	case "directionpoint":
+		// path:directionpoint(dx, dy) - find point where tangent equals (dx, dy)
+		l.PushGoFunction(func(l *lua.State) int {
+			dx := lua.CheckNumber(l, 2)
+			dy := lua.CheckNumber(l, 3)
+			x, y, found := path.DirectionPointOf(mp.Number(dx), mp.Number(dy))
+			if !found {
+				l.PushNil()
+				return 1
+			}
+			pushPoint(l, mp.P(float64(x), float64(y)))
+			return 1
+		})
+		return 1
+
 	case "precontrol":
 		l.PushGoFunction(func(l *lua.State) int {
 			t := lua.CheckNumber(l, 2)
@@ -480,6 +506,26 @@ func pathIndex(l *lua.State) int {
 			t2 := lua.CheckNumber(l, 3)
 			sub := path.Subpath(mp.Number(t1), mp.Number(t2))
 			pushPath(l, sub)
+			return 1
+		})
+		return 1
+
+	case "cutbefore":
+		// path:cutbefore(other) - cut self before intersection with other
+		l.PushGoFunction(func(l *lua.State) int {
+			other := checkPath(l, 2)
+			cut := path.CutBefore(other)
+			pushPath(l, cut)
+			return 1
+		})
+		return 1
+
+	case "cutafter":
+		// path:cutafter(other) - cut self after intersection with other
+		l.PushGoFunction(func(l *lua.State) int {
+			other := checkPath(l, 2)
+			cut := path.CutAfter(other)
+			pushPath(l, cut)
 			return 1
 		})
 		return 1
