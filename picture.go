@@ -170,6 +170,19 @@ func pictureIndex(l *lua.State) int {
 			return 1
 		})
 		return 1
+
+	case "converttopaths":
+		// pic:converttopaths(face) - convert all labels to glyph outline paths
+		l.PushGoFunction(func(l *lua.State) int {
+			face := checkFace(l, 2)
+			if err := pic.ConvertLabelsToPathsWithFont(face); err != nil {
+				lua.Errorf(l, "converttopaths: %s", err)
+				return 0
+			}
+			l.PushValue(1) // return self for chaining
+			return 1
+		})
+		return 1
 	}
 
 	return 0

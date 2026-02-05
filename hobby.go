@@ -25,6 +25,7 @@ func Open(l *lua.State) {
 	registerContextMeta(l)
 	registerVarMeta(l)
 	registerCtxPathBuilderMeta(l)
+	registerFaceMeta(l)
 
 	// Register the module loader in package.preload
 	l.Field(lua.RegistryIndex, "_PRELOAD")
@@ -119,6 +120,10 @@ func loader(l *lua.State) int {
 	// Context (equation solver)
 	l.PushGoFunction(luaNewContext)
 	l.SetField(-2, "context")
+
+	// Font loading
+	l.PushGoFunction(luaLoadFont)
+	l.SetField(-2, "loadfont")
 
 	// Return the table (it's on top of the stack)
 	return 1

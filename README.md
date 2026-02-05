@@ -1,3 +1,5 @@
+[![Homepage](https://img.shields.io/badge/homepage-boxesandglue.dev-blue)](https://boxesandglue.dev/hobby)
+
 # Hobby
 
 Lua bindings for the [mpgo](https://github.com/boxesandglue/mpgo) MetaPost curve library. Named after John Hobby, the developer of MetaPost and the Hobby-Knuth smooth curve algorithm.

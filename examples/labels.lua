@@ -1,6 +1,10 @@
 -- labels.lua: Example demonstrating label support in hobby
 local h = require("hobby")
 
+-- Load a font for converting labels to glyph outlines (optional)
+-- Without a font, labels are rendered as SVG <text> elements.
+local face = h.loadfont("/System/Library/Fonts/Supplemental/Arial.ttf")
+
 -- Create a picture
 local pic = h.picture()
 
@@ -36,6 +40,9 @@ pic:dotlabel("c", m01, "bot", h.color("blue"))
 -- Add centroid with red label
 local centroid = h.point(50, 28.87)
 pic:dotlabel("S", centroid, "urt", h.color("red"))
+
+-- Convert labels to glyph outline paths
+pic:converttopaths(face)
 
 -- Output SVG
 local svg = h.svg()
