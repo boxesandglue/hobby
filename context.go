@@ -142,6 +142,19 @@ func contextIndex(l *lua.State) int {
 		})
 		return 1
 
+	case "linearxy":
+		// ctx:linearxy(v, cx, cy, constant) - constrain cx*v.x + cy*v.y = constant
+		l.PushGoFunction(func(l *lua.State) int {
+			v := checkVar(l, 2)
+			cx := lua.CheckNumber(l, 3)
+			cy := lua.CheckNumber(l, 4)
+			constant := lua.CheckNumber(l, 5)
+			ctx.LinearXY(v, cx, cy, constant)
+			l.PushValue(1)
+			return 1
+		})
+		return 1
+
 	case "eqvar":
 		// ctx:eqvar(a, b) - constrain a = b
 		l.PushGoFunction(func(l *lua.State) int {

@@ -3,7 +3,7 @@ module github.com/boxesandglue/hobby
 go 1.22
 
 require (
-	github.com/boxesandglue/mpgo v0.1.4
+	github.com/boxesandglue/mpgo v0.1.5
 	github.com/speedata/go-lua v0.1.2
 )
 
