@@ -3,6 +3,7 @@ package hobby
 import (
 	"github.com/boxesandglue/mpgo/draw"
 	"github.com/boxesandglue/mpgo/mp"
+	"github.com/boxesandglue/mpgo/svg"
 	lua "github.com/speedata/go-lua"
 )
 
@@ -804,7 +805,74 @@ func pathIndex(l *lua.State) int {
 			return 1
 		})
 		return 1
+
+	case "llcorner":
+		minX, minY, _, _ := svg.PathBBox(path)
+		pushPoint(l, mp.P(minX, minY))
+		return 1
+
+	case "lrcorner":
+		_, minY, maxX, _ := svg.PathBBox(path)
+		pushPoint(l, mp.P(maxX, minY))
+		return 1
+
+	case "ulcorner":
+		minX, _, _, maxY := svg.PathBBox(path)
+		pushPoint(l, mp.P(minX, maxY))
+		return 1
+
+	case "urcorner":
+		_, _, maxX, maxY := svg.PathBBox(path)
+		pushPoint(l, mp.P(maxX, maxY))
+		return 1
+
+	case "center":
+		minX, minY, maxX, maxY := svg.PathBBox(path)
+		pushPoint(l, mp.P((minX+maxX)/2, (minY+maxY)/2))
+		return 1
+
+	case "bbox":
+		l.PushGoFunction(func(l *lua.State) int {
+			minX, minY, maxX, maxY := svg.PathBBox(path)
+			pushPath(l, bboxPath(minX, minY, maxX, maxY))
+			return 1
+		})
+		return 1
 	}
 
 	return 0
+}
+
+// bboxPath creates a closed rectangular path from bounding box coordinates.
+func bboxPath(minX, minY, maxX, maxY float64) *mp.Path {
+	coords := [][2]float64{
+		{minX, minY},
+		{maxX, minY},
+		{maxX, maxY},
+		{minX, maxY},
+	}
+	p := mp.NewPath()
+	var knots []*mp.Knot
+	for _, c := range coords {
+		k := mp.NewKnot()
+		k.XCoord = mp.Number(c[0])
+		k.YCoord = mp.Number(c[1])
+		k.LeftX = k.XCoord
+		k.LeftY = k.YCoord
+		k.RightX = k.XCoord
+		k.RightY = k.YCoord
+		k.LType = mp.KnotExplicit
+		k.RType = mp.KnotExplicit
+		knots = append(knots, k)
+	}
+	for i, k := range knots {
+		p.Append(k)
+		if i > 0 {
+			knots[i-1].Next = k
+			k.Prev = knots[i-1]
+		}
+	}
+	knots[len(knots)-1].Next = knots[0]
+	knots[0].Prev = knots[len(knots)-1]
+	return p
 }

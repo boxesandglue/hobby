@@ -1,8 +1,11 @@
 package hobby
 
 import (
+	"math"
+
 	"github.com/boxesandglue/mpgo/draw"
 	"github.com/boxesandglue/mpgo/mp"
+	"github.com/boxesandglue/mpgo/svg"
 	lua "github.com/speedata/go-lua"
 )
 
@@ -125,34 +128,46 @@ func pictureIndex(l *lua.State) int {
 		return 1
 
 	case "label":
-		// pic:label(text, point, anchor) - add a text label
-		// anchor is a string: "center", "top", "bot", "lft", "rt", "ulft", "urt", "llft", "lrt"
+		// pic:label(text, point, anchor[, {color=, fontsize=}])
 		l.PushGoFunction(func(l *lua.State) int {
 			text := lua.CheckString(l, 2)
 			pos := checkPoint(l, 3)
 			anchorStr := lua.OptString(l, 4, "center")
 			anchor := parseAnchor(anchorStr)
-			pic.Label(text, pos, anchor)
+			label := pic.LabelWithStyle(text, pos, anchor)
+			if l.Top() >= 5 && l.IsTable(5) {
+				applyLabelOptions(l, 5, label)
+			}
 			l.PushValue(1) // return self for chaining
 			return 1
 		})
 		return 1
 
 	case "dotlabel":
-		// pic:dotlabel(text, point, anchor, color) - add a label with a dot
+		// pic:dotlabel(text, point, anchor[, color | {color=, fontsize=}])
 		l.PushGoFunction(func(l *lua.State) int {
 			text := lua.CheckString(l, 2)
 			pos := checkPoint(l, 3)
 			anchorStr := lua.OptString(l, 4, "center")
 			anchor := parseAnchor(anchorStr)
-			// Color is optional, default to black
-			var color mp.Color
+			label := pic.LabelWithStyle(text, pos, anchor)
+			color := mp.ColorCSS("black")
 			if l.Top() >= 5 && !l.IsNil(5) {
-				color = checkColor(l, 5)
-			} else {
-				color = mp.ColorCSS("black")
+				if l.IsTable(5) {
+					applyLabelOptions(l, 5, label)
+					color = label.Color
+				} else {
+					color = checkColor(l, 5)
+					label.Color = color
+				}
 			}
-			pic.DotLabel(text, pos, anchor, color)
+			// Add the dot (filled circle at position)
+			dot := mp.FullCircle()
+			dot = mp.Scaled(mp.DefaultDotLabelDiam).ApplyToPath(dot)
+			dot = mp.Shifted(pos.X, pos.Y).ApplyToPath(dot)
+			dot.Style.Fill = color
+			dot.Style.Stroke = mp.ColorCSS("none")
+			pic.AddPath(dot)
 			l.PushValue(1) // return self for chaining
 			return 1
 		})
@@ -183,9 +198,93 @@ func pictureIndex(l *lua.State) int {
 			return 1
 		})
 		return 1
+
+	case "llcorner":
+		minX, minY, _, _ := pictureBBox(pic)
+		pushPoint(l, mp.P(minX, minY))
+		return 1
+
+	case "lrcorner":
+		_, minY, maxX, _ := pictureBBox(pic)
+		pushPoint(l, mp.P(maxX, minY))
+		return 1
+
+	case "ulcorner":
+		minX, _, _, maxY := pictureBBox(pic)
+		pushPoint(l, mp.P(minX, maxY))
+		return 1
+
+	case "urcorner":
+		_, _, maxX, maxY := pictureBBox(pic)
+		pushPoint(l, mp.P(maxX, maxY))
+		return 1
+
+	case "center":
+		minX, minY, maxX, maxY := pictureBBox(pic)
+		pushPoint(l, mp.P((minX+maxX)/2, (minY+maxY)/2))
+		return 1
+
+	case "bbox":
+		l.PushGoFunction(func(l *lua.State) int {
+			minX, minY, maxX, maxY := pictureBBox(pic)
+			pushPath(l, bboxPath(minX, minY, maxX, maxY))
+			return 1
+		})
+		return 1
 	}
 
 	return 0
+}
+
+// pictureBBox computes the bounding box of a picture.
+// If the picture has a clip path, the clip path bounds are used (like MetaPost).
+// Otherwise, bounds of all paths are aggregated with stroke width padding.
+func pictureBBox(pic *draw.Picture) (minX, minY, maxX, maxY float64) {
+	if clip := pic.ClipPath(); clip != nil {
+		return svg.PathBBox(clip)
+	}
+	minX, minY = math.Inf(1), math.Inf(1)
+	maxX, maxY = math.Inf(-1), math.Inf(-1)
+	for _, p := range pic.Paths() {
+		pMinX, pMinY, pMaxX, pMaxY := svg.PathBBox(p)
+		halfStroke := p.Style.StrokeWidth / 2
+		pMinX -= halfStroke
+		pMinY -= halfStroke
+		pMaxX += halfStroke
+		pMaxY += halfStroke
+		if pMinX < minX {
+			minX = pMinX
+		}
+		if pMinY < minY {
+			minY = pMinY
+		}
+		if pMaxX > maxX {
+			maxX = pMaxX
+		}
+		if pMaxY > maxY {
+			maxY = pMaxY
+		}
+	}
+	if math.IsInf(minX, 1) {
+		return 0, 0, 0, 0
+	}
+	return
+}
+
+// applyLabelOptions reads label options from a Lua table at the given stack index.
+// Supported keys: color (Color), fontsize (number).
+func applyLabelOptions(l *lua.State, index int, label *mp.Label) {
+	l.Field(index, "color")
+	if !l.IsNil(-1) {
+		label.Color = checkColor(l, l.Top())
+	}
+	l.Pop(1)
+
+	l.Field(index, "fontsize")
+	if !l.IsNil(-1) {
+		label.FontSize = lua.CheckNumber(l, l.Top())
+	}
+	l.Pop(1)
 }
 
 // pushLabel pushes a Label as userdata
