@@ -20,6 +20,11 @@ task :build do
     sh "go build -ldflags '-s -w -X main.Version=#{@hobby_version}' -o bin/hobby github.com/boxesandglue/hobby/cmd/hobby"
 end
 
+desc "Install 'hobby' into $GOBIN"
+task :install do
+    sh "go install -ldflags '-s -w -X main.Version=#{@hobby_version}' github.com/boxesandglue/hobby/cmd/hobby"
+end
+
 desc "Show version information"
 task :showversion do
     puts "hobby version #{@hobby_version}"
