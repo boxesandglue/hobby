@@ -104,7 +104,7 @@ func pathBuilderIndex(l *lua.State) int {
 	switch key {
 	case "moveto":
 		l.PushGoFunction(func(l *lua.State) int {
-			p := checkPoint(l, 2)
+			p, _ := checkPointOrXY(l, 2)
 			pb.builder.MoveTo(p)
 			l.PushValue(1) // return self for chaining
 			return 1
@@ -113,7 +113,7 @@ func pathBuilderIndex(l *lua.State) int {
 
 	case "lineto":
 		l.PushGoFunction(func(l *lua.State) int {
-			p := checkPoint(l, 2)
+			p, _ := checkPointOrXY(l, 2)
 			pb.builder.LineTo(p)
 			l.PushValue(1)
 			return 1
@@ -122,7 +122,7 @@ func pathBuilderIndex(l *lua.State) int {
 
 	case "curveto":
 		l.PushGoFunction(func(l *lua.State) int {
-			p := checkPoint(l, 2)
+			p, _ := checkPointOrXY(l, 2)
 			pb.builder.CurveTo(p)
 			l.PushValue(1)
 			return 1
@@ -130,11 +130,11 @@ func pathBuilderIndex(l *lua.State) int {
 		return 1
 
 	case "curvetowithcontrols":
-		// curvetowithcontrols(pt, c1, c2) - curve with explicit control points
+		// curvetowithcontrols(pt, c1, c2) or curvetowithcontrols(x,y, c1x,c1y, c2x,c2y)
 		l.PushGoFunction(func(l *lua.State) int {
-			pt := checkPoint(l, 2)
-			c1 := checkPoint(l, 3)
-			c2 := checkPoint(l, 4)
+			pt, next := checkPointOrXY(l, 2)
+			c1, next := checkPointOrXY(l, next)
+			c2, _ := checkPointOrXY(l, next)
 			pb.builder.CurveToWithControls(pt, c1, c2)
 			l.PushValue(1)
 			return 1

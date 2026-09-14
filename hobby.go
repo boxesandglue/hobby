@@ -146,6 +146,18 @@ func checkPoint(l *lua.State, index int) mp.Point {
 	return mp.P(x, y)
 }
 
+// checkPointOrXY accepts either a Point userdata or two numbers (x, y) at
+// the given stack index. It returns the point and the stack index of the
+// next argument after the consumed point/coordinates.
+func checkPointOrXY(l *lua.State, index int) (mp.Point, int) {
+	if l.IsNumber(index) {
+		x := lua.CheckNumber(l, index)
+		y := lua.CheckNumber(l, index+1)
+		return mp.P(x, y), index + 2
+	}
+	return checkPoint(l, index), index + 1
+}
+
 // Helper to push a Point as userdata
 func pushPoint(l *lua.State, p mp.Point) {
 	ptr := new(mp.Point)

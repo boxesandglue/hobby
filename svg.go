@@ -69,6 +69,18 @@ func svgIndex(l *lua.State) int {
 		})
 		return 1
 
+	case "viewbox":
+		l.PushGoFunction(func(l *lua.State) int {
+			minX := lua.CheckNumber(l, 2)
+			minY := lua.CheckNumber(l, 3)
+			w := lua.CheckNumber(l, 4)
+			h := lua.CheckNumber(l, 5)
+			s.SetViewBox(minX, minY, w, h)
+			l.PushValue(1)
+			return 1
+		})
+		return 1
+
 	case "addpicture":
 		l.PushGoFunction(func(l *lua.State) int {
 			pic := checkPicture(l, 2)
